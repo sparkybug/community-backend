@@ -19,12 +19,23 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 router.put('/:id', authenticateToken, async (req, res) => {
-    const post = await Post.findByPk(req.params.id);
+    try {
+        const post = await Post.findByPk(req.params.id);
 
-    if (post.userId !== req.user.id) return res.sendStatus(403);
-    await post.update(req.body);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
 
-    res.json(post);
+        if (post.userId !== req.user.id) {
+            return res.status(403).json({ message: 'You are not authorized to edit this post' });
+        }
+
+        await post.update(req.body);
+
+        res.json(post);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error });
+    }
 });
 
 router.delete('/:id', authenticateToken, async (req, res) => {
